@@ -17,6 +17,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
+    "pm2": "^6.0.6",
     "prisma": "^6.7.0"
   },
   "devDependencies": {
