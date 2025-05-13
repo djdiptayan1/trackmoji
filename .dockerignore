@@ -1,0 +1,44 @@
+# Git and version control files
+.git
+.gitignore
+README.md
+LICENSE
+
+# Virtual environment
+venv/
+ENV/
+.env
+.venv
+env/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker files
+docker-compose.yml
+
+# Database files
+*.db
+*.sqlite3
+
+# Log files
+logs/
+*.log
+
+# Local development files
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Prisma
+prisma/migrations/
+
+./node_modules
+# Yarn and npm logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
