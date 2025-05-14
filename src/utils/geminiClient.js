@@ -3,7 +3,7 @@ require("dotenv").config();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash-preview-04-17"; // Use model from .env or a known fallback
+const MODEL_NAME = process.env.GEMINI_MODEL
 
 /**
  * Analyze transaction text to determine its type (debit/credit), amount, category, etc.
