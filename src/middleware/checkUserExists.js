@@ -2,23 +2,33 @@ const { getPrismaClient } = require('../../prisma/client');
 const prisma = getPrismaClient();
 
 const checkUserExists = async (req, res, next) => {
-    // Get userPhone from req.body (POST), req.params (GET with URL params), or req.query (GET with query params)
-    let userPhone = req.body?.userPhone || req.query?.userPhone;
+    console.time('checkUserExists');
+    console.log(`[CheckUserExists] Started - ${new Date().toISOString()}`);
+
+    // Get userPhone from req.body (POST) or req.query (GET)
+    const userPhone = req.body?.userPhone || req.query?.userPhone;
 
     if (!userPhone) {
+        console.warn('[CheckUserExists] Missing required field: userPhone');
+        console.timeEnd('checkUserExists');
         return res.status(400).json({
             success: false,
             error: { message: "Missing required field: userPhone" }
         });
     }
 
+    console.log(`[CheckUserExists] Looking up user with phone: ${userPhone}`);
+
     try {
+        console.time('dbUserLookup');
         const user = await prisma.user.findUnique({
             where: { phone: userPhone },
-            // select: { id: true, phone: true }
         });
+        console.timeEnd('dbUserLookup');
 
         if (!user) {
+            console.warn(`[CheckUserExists] User not found for phone: ${userPhone}`);
+            console.timeEnd('checkUserExists');
             return res.status(404).json({
                 success: false,
                 error: { message: "User not found. Please register first." }
@@ -26,9 +36,12 @@ const checkUserExists = async (req, res, next) => {
         }
 
         req.user = user; // Attach user info to request
-        next(); // Proceed to the controller
+        console.log(`[CheckUserExists] User found with ID: ${user.id}`);
+        console.timeEnd('checkUserExists');
+        next();
     } catch (error) {
-        console.error("Error in checkUserExists middleware:", error);
+        console.error("[CheckUserExists] Internal server error:", error);
+        console.timeEnd('checkUserExists');
         return res.status(500).json({
             success: false,
             error: { message: "Internal server error" }
