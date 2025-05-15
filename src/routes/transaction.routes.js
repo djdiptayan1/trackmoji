@@ -1,28 +1,23 @@
-// src/routes/transaction.routes.js
 const express = require('express');
+const checkUserExists = require('../middleware/checkUserExists');
 const transactionController = require('../controllers/transaction.controller');
 
 const router = express.Router();
 
-// Process a natural language transaction
-router.post('/', transactionController.processTransaction);
+// POST: Process a natural language transaction (userPhone likely in body or headers)
+router.post('/', checkUserExists, transactionController.processTransaction);
 
-// Query transactions using natural language
-router.post('/query', transactionController.queryTransactions);
+// POST: Query transactions using natural language
+router.post('/query', checkUserExists, transactionController.queryTransactions);
 
-// Get all transactions for a user
-router.get('/:userPhone', transactionController.getTransactions);
+router.get('/', checkUserExists, transactionController.getTransactions);
 
-// Get transaction summary for a user
-router.get('/:userPhone/summary', transactionController.getTransactionSummary);
+router.get('/summary', checkUserExists, transactionController.getTransactionSummary);
 
-// Get user's credit transactions
-router.get('/:userPhone/credits', transactionController.getUserCredits);
+router.get('/credits', checkUserExists, transactionController.getUserCredits);
 
-// Get user's debit transactions
-router.get('/:userPhone/debits', transactionController.getUserDebits);
+router.get('/debits', checkUserExists, transactionController.getUserDebits);
 
-// Get transactions by category
-router.get('/:userPhone/category/:category', transactionController.getTransactionsByCategory);
+router.get('/category', checkUserExists, transactionController.getTransactionsByCategory);
 
 module.exports = router;
