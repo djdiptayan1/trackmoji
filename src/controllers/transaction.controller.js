@@ -1,8 +1,8 @@
 // src/controllers/transaction.controller.js
-const { PrismaClient } = require("@prisma/client");
+const { getPrismaClient } = require('../../prisma/client');
 const { analyzeTransaction, queryTransactions } = require("../utils/geminiClient");
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 /**
  * Process a new transaction from natural language text
@@ -41,21 +41,10 @@ exports.processTransaction = async (req, res, next) => {
       });
     }
 
-    // Find or create user
-    console.time('findOrCreateUser');
-    let user = await prisma.user.findUnique({
-      where: { phone: userPhone }
-    });
-
-    if (!user) {
-      console.log(`[ProcessTransaction] Creating new user for phone: ${userPhone}`);
-      user = await prisma.user.create({
-        data: { phone: userPhone }
-      });
-    } else {
-      console.log(`[ProcessTransaction] Found existing user: ${user.id}`);
-    }
-    console.timeEnd('findOrCreateUser');
+    // Only allow if user exists
+    console.time('findUser');
+    const user = req.user;
+    console.timeEnd('findUser');
 
     // Parse transaction date
     let transactionDate;
@@ -63,7 +52,7 @@ exports.processTransaction = async (req, res, next) => {
       transactionDate = new Date(analysis.date);
       if (isNaN(transactionDate.getTime())) {
         console.log(`[ProcessTransaction] Invalid date format: ${analysis.date}, using current date`);
-        transactionDate = new Date(); // Fallback to current date if parsing fails
+        transactionDate = new Date();
       }
     } catch (error) {
       console.log(`[ProcessTransaction] Error parsing date: ${error.message}`);
@@ -79,7 +68,8 @@ exports.processTransaction = async (req, res, next) => {
         description: analysis.description || null,
         category: analysis.category || null,
         source: analysis.source || null,
-        date: transactionDate,
+        // date: transactionDate,
+        date: new Date(),
         userId: user.id
       }
     });
@@ -147,28 +137,9 @@ exports.getTransactions = async (req, res, next) => {
     const { userPhone } = req.params;
     console.log(`[GetTransactions] Getting transactions for phone: ${userPhone}`);
 
-    if (!userPhone) {
-      console.log('[GetTransactions] Missing userPhone parameter');
-      return res.status(400).json({
-        success: false,
-        error: { message: "User phone number is required" }
-      });
-    }
-
-    // Find user by phone number
-    console.time('findUser');
-    const user = await prisma.user.findUnique({
-      where: { phone: userPhone }
-    });
-    console.timeEnd('findUser');
-
-    if (!user) {
-      console.log(`[GetTransactions] User not found with phone: ${userPhone}`);
-      return res.status(404).json({
-        success: false,
-        error: { message: "User not found" }
-      });
-    }
+    // User should already be verified by middleware and attached to req
+    const user = req.user;
+    console.log(`[GetTransactions] Using user with ID: ${user.id}`);
 
     console.log(`[GetTransactions] Found user with ID: ${user.id}`);
     console.time('fetchTransactions');
@@ -216,20 +187,8 @@ exports.queryTransactions = async (req, res, next) => {
       });
     }
 
-    // Find user by phone number
-    console.time('findUserQuery');
-    const user = await prisma.user.findUnique({
-      where: { phone: userPhone }
-    });
-    console.timeEnd('findUserQuery');
-
-    if (!user) {
-      console.log(`[QueryTransactions] User not found with phone: ${userPhone}`);
-      return res.status(404).json({
-        success: false,
-        error: { message: "User not found" }
-      });
-    }
+    // User should already be verified by middleware and attached to req
+    const user = req.user;
     console.log(`[QueryTransactions] Found user with ID: ${user.id}`);
 
     // Get user transactions
@@ -295,28 +254,8 @@ exports.getTransactionSummary = async (req, res, next) => {
     const { userPhone } = req.params;
     console.log(`[GetTransactionSummary] Getting summary for phone: ${userPhone}`);
 
-    if (!userPhone) {
-      console.log('[GetTransactionSummary] Missing userPhone parameter');
-      return res.status(400).json({
-        success: false,
-        error: { message: "User phone number is required" }
-      });
-    }
-
-    // Find user by phone number
-    console.time('findUserSummary');
-    const user = await prisma.user.findUnique({
-      where: { phone: userPhone }
-    });
-    console.timeEnd('findUserSummary');
-
-    if (!user) {
-      console.log(`[GetTransactionSummary] User not found with phone: ${userPhone}`);
-      return res.status(404).json({
-        success: false,
-        error: { message: "User not found" }
-      });
-    }
+    // User should already be verified by middleware and attached to req
+    const user = req.user;
     console.log(`[GetTransactionSummary] Found user with ID: ${user.id}`);
 
     // Get transactions from both specific tables for better data organization
@@ -396,28 +335,8 @@ exports.getUserCredits = async (req, res, next) => {
     const { userPhone } = req.params;
     console.log(`[GetUserCredits] Getting credits for phone: ${userPhone}`);
 
-    if (!userPhone) {
-      console.log('[GetUserCredits] Missing userPhone parameter');
-      return res.status(400).json({
-        success: false,
-        error: { message: "User phone number is required" }
-      });
-    }
-
-    // Find user by phone number
-    console.time('findUserCredits');
-    const user = await prisma.user.findUnique({
-      where: { phone: userPhone }
-    });
-    console.timeEnd('findUserCredits');
-
-    if (!user) {
-      console.log(`[GetUserCredits] User not found with phone: ${userPhone}`);
-      return res.status(404).json({
-        success: false,
-        error: { message: "User not found" }
-      });
-    }
+    // User should already be verified by middleware and attached to req
+    const user = req.user;
     console.log(`[GetUserCredits] Found user with ID: ${user.id}`);
 
     console.time('fetchUserCredits');
@@ -458,28 +377,8 @@ exports.getUserDebits = async (req, res, next) => {
     const { userPhone } = req.params;
     console.log(`[GetUserDebits] Getting debits for phone: ${userPhone}`);
 
-    if (!userPhone) {
-      console.log('[GetUserDebits] Missing userPhone parameter');
-      return res.status(400).json({
-        success: false,
-        error: { message: "User phone number is required" }
-      });
-    }
-
-    // Find user by phone number
-    console.time('findUserDebits');
-    const user = await prisma.user.findUnique({
-      where: { phone: userPhone }
-    });
-    console.timeEnd('findUserDebits');
-
-    if (!user) {
-      console.log(`[GetUserDebits] User not found with phone: ${userPhone}`);
-      return res.status(404).json({
-        success: false,
-        error: { message: "User not found" }
-      });
-    }
+    // User should already be verified by middleware and attached to req
+    const user = req.user;
     console.log(`[GetUserDebits] Found user with ID: ${user.id}`);
 
     console.time('fetchUserDebits');
@@ -506,7 +405,6 @@ exports.getUserDebits = async (req, res, next) => {
     next(error);
   }
 };
-
 /**
  * Get transactions by category
  * @param {Request} req - Express request object
@@ -517,7 +415,8 @@ exports.getTransactionsByCategory = async (req, res, next) => {
   console.time('getTransactionsByCategory');
   console.log(`[GetTransactionsByCategory] Started - ${new Date().toISOString()}`);
   try {
-    const { userPhone, category } = req.params;
+    // Read from query parameters, not params
+    const { userPhone, category } = req.query;
     console.log(`[GetTransactionsByCategory] Input: userPhone="${userPhone}", category="${category}"`);
 
     if (!userPhone || !category) {
@@ -528,20 +427,8 @@ exports.getTransactionsByCategory = async (req, res, next) => {
       });
     }
 
-    // Find user by phone number
-    console.time('findUserByCategory');
-    const user = await prisma.user.findUnique({
-      where: { phone: userPhone }
-    });
-    console.timeEnd('findUserByCategory');
-
-    if (!user) {
-      console.log(`[GetTransactionsByCategory] User not found with phone: ${userPhone}`);
-      return res.status(404).json({
-        success: false,
-        error: { message: "User not found" }
-      });
-    }
+    // User should already be verified by middleware and attached to req
+    const user = req.user;
     console.log(`[GetTransactionsByCategory] Found user with ID: ${user.id}`);
 
     // Get transactions with the specified category
@@ -559,9 +446,9 @@ exports.getTransactionsByCategory = async (req, res, next) => {
       }
     });
     console.timeEnd('fetchTransactionsByCategory');
-    console.log(`[GetTransactionsByCategory] Found ${transactions.length} general transactions for category: ${category}`);
+    console.log(`[GetTransactionsByCategory] Found ${transactions.length} transactions for category: ${category}`);
 
-    // If it's a debit category, also get specific debit records
+    // Get debit records by category
     console.time('fetchDebitsByCategory');
     const debits = await prisma.debit.findMany({
       where: {
